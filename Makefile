@@ -41,7 +41,7 @@ add-target:
 		wget -q --no-check-certificate -O ~/.Makefiles/$$TARGET_PATH/Makefile https://github.com/azataiot/reusable-makefiles/raw/main/$$TARGET_PATH/Makefile; \
 		if ! grep -q "include ~/.Makefiles/$$TARGET_PATH/Makefile" Makefile; then \
 			echo "include ~/.Makefiles/$$TARGET_PATH/Makefile" >> Makefile; \
-			PHONY_TARGETS=$$(awk '/.PHONY:/ {print $$2}' ~/.Makefiles/$$TARGET_PATH/Makefile); \
+			PHONY_TARGETS=$$(awk '/.PHONY:/ {for (i=2; i<=NF; i++) print $$i}' ~/.Makefiles/$$TARGET_PATH/Makefile | tr '\n' ' '); \
 			echo ".PHONY: $$PHONY_TARGETS" >> Makefile; \
 			echo "Added $$TARGET_PATH Makefile to the current project."; \
 		else \
@@ -51,7 +51,6 @@ add-target:
 		echo "Error: $$TARGET_PATH Makefile not found in the index."; \
 	fi
 
-
 ## Remove a reusable Makefile reference from the current Makefile
 remove-target:
 	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
@@ -59,19 +58,23 @@ remove-target:
 		exit 1; \
 	fi; \
 	TARGET_PATH=$(filter-out $@,$(MAKECMDGOALS)); \
-	if grep -q "$$TARGET_PATH/Makefile" $(INDEX_FILE); then \
-		PHONY_TARGETS=$$(awk '/.PHONY:/ {print $$2}' ~/.Makefiles/$$TARGET_PATH/Makefile); \
-		sed -i.bak '/.PHONY: $$PHONY_TARGETS/d' Makefile; \
-		sed -i.bak '/include ~\/.Makefiles\/'$$TARGET_PATH'\/Makefile/d' Makefile; \
-		echo "Removed $$TARGET_PATH Makefile reference from the current project."; \
+	if grep -q "include ~/.Makefiles/$$TARGET_PATH/Makefile" Makefile; then \
+		if grep -q "$$TARGET_PATH/Makefile" $(INDEX_FILE); then \
+			PHONY_TARGETS=$$(awk '/.PHONY:/ {for (i=2; i<=NF; i++) print $$i}' ~/.Makefiles/$$TARGET_PATH/Makefile 2>/dev/null | tr '\n' ' '); \
+			sed -i.bak "/.PHONY: $$PHONY_TARGETS/d" Makefile; \
+			sed -i.bak '/include ~\/.Makefiles\/'$$TARGET_PATH'\/Makefile/d' Makefile; \
+			echo "Removed $$TARGET_PATH Makefile reference from the current project."; \
+		else \
+			echo "Error: $$TARGET_PATH Makefile not found in the index."; \
+		fi; \
 	else \
-		echo "Error: $$TARGET_PATH Makefile not found in the index."; \
+		echo "$$TARGET_PATH Makefile is not included in the current project."; \
 	fi
 
 
 
 ## Remove a downloaded Makefile from disk
-remove-target-file: remove-target
+remove-target-file:
 	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
 		echo "Please specify a target path using 'make remove-target-file <path>'"; \
 		exit 1; \
@@ -83,6 +86,7 @@ remove-target-file: remove-target
 	else \
 		echo "Error: $$TARGET_PATH Makefile not found in the index."; \
 	fi
+
 
 # This is a workaround to allow passing arguments to Make targets
 %:
