@@ -14,6 +14,12 @@ repos:
       - id: check-added-large-files
         args: [ '--maxkb=1024' ]
 
+  - repo: https://github.com/mrtazz/checkmake.git
+    rev: 0.2.2
+    hooks:
+      # Use this hook to let pre-commit build checkmake in its sandbox
+      - id: checkmake
+
 # sets up .pre-commit-ci.yaml to ensure pre-commit dependencies stay up to date
 ci:
   autoupdate_schedule: weekly
