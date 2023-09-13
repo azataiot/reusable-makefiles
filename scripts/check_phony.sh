@@ -1,29 +1,25 @@
 #!/bin/bash
 
-# scripts/check_phony.sh
-
-# Initialize an associative array to store PHONY targets
-declare -A phony_targets
+# Temporary file to store all .PHONY targets
+temp_file=$(mktemp)
 
 # Loop through all Makefiles in the repository
-find . -name 'Makefile' | while IFS= read -r file; do
-    # Check if .PHONY is present in the Makefile
-    if ! grep -q '.PHONY' "$file"; then
-        echo "Error: $file does not contain .PHONY"
-        exit 1
-    else
-        # Extract PHONY targets and check for duplicates
-        targets=$(grep '.PHONY:' "$file" | cut -d ':' -f 2)
-        for target in $targets; do
-            if [[ ${phony_targets["$target"]} ]]; then
-                echo "Error: Duplicate .PHONY target $target found in $file"
-                exit 1
-            else
-                phony_targets["$target"]=1
-            fi
-        done
-    fi
-done
+while IFS= read -r -d '' file; do
+    # Debug print: Display the current Makefile being processed
+    echo "Processing: $file"
 
+    # Extract .PHONY targets from the Makefile and append to temp_file
+    grep -E '^\.PHONY:' "$file" | sed 's/.PHONY: //' | tr ' ' '\n' >> "$temp_file"
+done < <(find . -name 'Makefile' -print0)
+
+# Check for duplicate targets
+if sort "$temp_file" | uniq -d | grep -q .; then
+    echo "Error: Duplicate .PHONY targets found:"
+    sort "$temp_file" | uniq -d
+    rm -f "$temp_file"
+    exit 1
+fi
+
+rm -f "$temp_file"
 echo "All Makefiles contain .PHONY without duplicate targets"
 exit 0
