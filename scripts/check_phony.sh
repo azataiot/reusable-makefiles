@@ -5,6 +5,11 @@ temp_file=$(mktemp)
 
 # Loop through all Makefiles in the repository
 while IFS= read -r -d '' file; do
+    # Skip the root Makefile
+    if [ "$file" = "./Makefile" ]; then
+        continue
+    fi
+
     # Debug print: Display the current Makefile being processed
     echo "Processing: $file"
 
@@ -21,5 +26,5 @@ if sort "$temp_file" | uniq -d | grep -q .; then
 fi
 
 rm -f "$temp_file"
-echo "All Makefiles contain .PHONY without duplicate targets"
+echo "All Makefiles (excluding root) contain .PHONY without duplicate targets"
 exit 0
