@@ -1,4 +1,4 @@
-.PHONY: push prdev pr
+.PHONY: push prdev pr branch branch-obsolete
 
 # Check for uncommitted changes
 ensure-clean:
@@ -52,3 +52,79 @@ pr: ensure-clean
 	else \
 		echo "Current branch is not a release or hotfix branch. Please switch to a release or hotfix branch before creating a PR to main."; \
 	fi
+
+## Checkout a new branch
+branch:
+	@bash -c ' \
+	echo "Choose a branch type:"; \
+	PS3="Select an option: "; \
+	options=("main" "dev" "feature" "release" "hotfix" "temp" "quit"); \
+	select opt in "$${options[@]}"; do \
+		case $$opt in \
+			main) \
+				git checkout main; \
+				read -p "Do you want to run git pull? [Y/n]: " pull_choice; \
+				[ -z "$$pull_choice" ] && pull_choice="Y"; \
+				if [ $$pull_choice = "Y" ] || [ $$pull_choice = "y" ]; then \
+					git pull origin main; \
+				fi; \
+				break; \
+				;; \
+			dev) \
+				git rev-parse --verify dev >/dev/null 2>&1 || git checkout -b dev; \
+				git checkout dev; \
+				read -p "Do you want to run git pull? [Y/n]: " pull_choice; \
+				[ -z "$$pull_choice" ] && pull_choice="Y"; \
+				if [ $$pull_choice = "Y" ] || [ $$pull_choice = "y" ]; then \
+					git pull origin dev; \
+				fi; \
+				break; \
+				;; \
+			feature) \
+				read -p "Enter the feature name: " feature_name; \
+				git checkout -b feature/$$feature_name; \
+				break; \
+				;; \
+			release) \
+				read -p "Enter the release version: " version; \
+				git checkout -b release/$$version; \
+				break; \
+				;; \
+			hotfix) \
+				read -p "Enter the hotfix version: " version; \
+				git checkout -b hotfix/$$version; \
+				break; \
+				;; \
+			temp) \
+				random_string=$$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13); \
+				git checkout -b temp/$$random_string; \
+				break; \
+				;; \
+			quit) \
+				echo "Exiting..."; \
+				break; \
+				;; \
+			*) \
+				echo "Invalid choice"; \
+				;; \
+		esac; \
+	done; \
+	'
+
+
+
+## Make the current branch obsolete and remove it from remote and local repositories
+branch-obsolete:ensure-clean
+	@CURRENT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD); \
+	if [[ "$$CURRENT_BRANCH" == main ]] || [[ "$$CURRENT_BRANCH" == dev ]]; then \
+		echo "Cannot make $$CURRENT_BRANCH obsolete."; \
+		exit 1; \
+	fi; \
+	echo "Making $$CURRENT_BRANCH obsolete..."; \
+	git branch -m obsolete/$$CURRENT_BRANCH; \
+	git push origin --delete $$CURRENT_BRANCH; \
+	git push origin --delete $$CURRENT_BRANCH --force-with-lease; \
+	git push origin obsolete/$$CURRENT_BRANCH; \
+	git push origin obsolete/$$CURRENT_BRANCH --force-with-lease; \
+	git branch -D obsolete/$$CURRENT_BRANCH; \
+	echo "Done!";
