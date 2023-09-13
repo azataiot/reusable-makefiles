@@ -1,3 +1,5 @@
+# pre-commit/Makefile
+
 .PHONY: pre-commit
 
 # EAlso need to write a script to ensure that the pre-commit is installed.
