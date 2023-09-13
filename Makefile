@@ -1,4 +1,4 @@
-.PHONY: help add remove remove-makefile
+.PHONY: help add-target remove-target remove-target-file update-targets
 
 .DEFAULT_GOAL := help
 
@@ -21,7 +21,7 @@ help:
 	{ lastLine = $$0 }' $(MAKEFILE_LIST) | sort -u
 
 ## Update the index of available Makefiles
-update:
+update-targets:
 	@mkdir -p ~/.Makefiles
 	@echo "Fetching directory structure from the repository..."
 	@curl -s "https://api.github.com/repos/azataiot/reusable-makefiles/git/trees/main?recursive=1" | \
@@ -29,32 +29,61 @@ update:
 	@mv temp_index.txt $(INDEX_FILE)
 	@echo "Updated the Makefile index."
 
-
 ## Add a reusable Makefile from the repository
-add:
-	@if [ -z "$(name)" ]; then \
-		echo "Please specify a name using 'make add name=xxx'"; \
+add-target:
+	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+		echo "Please specify a target path using 'make add-target <path>'"; \
 		exit 1; \
 	fi; \
-	mkdir -p ~/.Makefiles/$(name); \
-	wget -O ~/.Makefiles/$(name)/Makefile https://github.com/azataiot/reusable-makefiles/raw/main/$(name)/Makefile; \
-	echo "include ~/.Makefiles/$(name)/Makefile" >> Makefile; \
-	echo "Added $(name) Makefile to the current project."
+	TARGET_PATH=$(filter-out $@,$(MAKECMDGOALS)); \
+	if grep -q "$$TARGET_PATH/Makefile" $(INDEX_FILE); then \
+		mkdir -p ~/.Makefiles/$$TARGET_PATH; \
+		wget -q --no-check-certificate -O ~/.Makefiles/$$TARGET_PATH/Makefile https://github.com/azataiot/reusable-makefiles/raw/main/$$TARGET_PATH/Makefile; \
+		if ! grep -q "include ~/.Makefiles/$$TARGET_PATH/Makefile" Makefile; then \
+			echo "include ~/.Makefiles/$$TARGET_PATH/Makefile" >> Makefile; \
+			PHONY_TARGETS=$$(awk '/.PHONY:/ {print $$2}' ~/.Makefiles/$$TARGET_PATH/Makefile); \
+			echo ".PHONY: $$PHONY_TARGETS" >> Makefile; \
+			echo "Added $$TARGET_PATH Makefile to the current project."; \
+		else \
+			echo "$$TARGET_PATH Makefile is already included in the current project, skipping."; \
+		fi; \
+	else \
+		echo "Error: $$TARGET_PATH Makefile not found in the index."; \
+	fi
+
 
 ## Remove a reusable Makefile reference from the current Makefile
-remove:
-	@if [ -z "$(name)" ]; then \
-		echo "Please specify a name using 'make remove name=xxx'"; \
+remove-target:
+	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+		echo "Please specify a target path using 'make remove-target <path>'"; \
 		exit 1; \
 	fi; \
-	sed -i.bak '/include ~\/.Makefiles\/$(name)\/Makefile/d' Makefile; \
-	echo "Removed $(name) Makefile reference from the current project."
+	TARGET_PATH=$(filter-out $@,$(MAKECMDGOALS)); \
+	if grep -q "$$TARGET_PATH/Makefile" $(INDEX_FILE); then \
+		PHONY_TARGETS=$$(awk '/.PHONY:/ {print $$2}' ~/.Makefiles/$$TARGET_PATH/Makefile); \
+		sed -i.bak '/.PHONY: $$PHONY_TARGETS/d' Makefile; \
+		sed -i.bak '/include ~\/.Makefiles\/'$$TARGET_PATH'\/Makefile/d' Makefile; \
+		echo "Removed $$TARGET_PATH Makefile reference from the current project."; \
+	else \
+		echo "Error: $$TARGET_PATH Makefile not found in the index."; \
+	fi
+
+
 
 ## Remove a downloaded Makefile from disk
-remove-makefile:
-	@if [ -z "$(name)" ]; then \
-		echo "Please specify a name using 'make remove-makefile name=xxx'"; \
+remove-target-file: remove-target
+	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+		echo "Please specify a target path using 'make remove-target-file <path>'"; \
 		exit 1; \
 	fi; \
-	rm -rf ~/.Makefiles/$(name); \
-	echo "Removed $(name) Makefile from disk."
+	TARGET_PATH=$(filter-out $@,$(MAKECMDGOALS)); \
+	if grep -q "$$TARGET_PATH/Makefile" $(INDEX_FILE); then \
+		rm -rf ~/.Makefiles/$$TARGET_PATH; \
+		echo "Removed $$TARGET_PATH Makefile from disk."; \
+	else \
+		echo "Error: $$TARGET_PATH Makefile not found in the index."; \
+	fi
+
+# This is a workaround to allow passing arguments to Make targets
+%:
+	@:
