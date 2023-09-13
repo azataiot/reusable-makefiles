@@ -2,6 +2,8 @@
 
 .DEFAULT_GOAL := help
 
+INDEX_FILE = ~/.Makefiles/index.txt
+
 # -- global targets--
 ## This help screen
 help:
@@ -17,6 +19,16 @@ help:
 	  } \
 	} \
 	{ lastLine = $$0 }' $(MAKEFILE_LIST) | sort -u
+
+## Update the index of available Makefiles
+update:
+	@mkdir -p ~/.Makefiles
+	@echo "Fetching directory structure from the repository..."
+	@curl -s "https://api.github.com/repos/azataiot/reusable-makefiles/git/trees/main?recursive=1" | \
+	awk -F'"' '/"path":/ && /Makefile/ {print $$4}' > temp_index.txt
+	@mv temp_index.txt $(INDEX_FILE)
+	@echo "Updated the Makefile index."
+
 
 ## Add a reusable Makefile from the repository
 add:
