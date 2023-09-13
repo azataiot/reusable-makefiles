@@ -114,7 +114,7 @@ branch:
 
 
 ## Make the current branch obsolete and remove it from remote and local repositories
-branch-obsolete:ensure-clean
+branch-obsolete: ensure-clean
 	@CURRENT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD); \
 	if [[ "$$CURRENT_BRANCH" == main ]] || [[ "$$CURRENT_BRANCH" == dev ]]; then \
 		echo "Cannot make $$CURRENT_BRANCH obsolete."; \
