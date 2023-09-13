@@ -5,7 +5,6 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
-      - id: check-toml
       - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
@@ -13,6 +12,8 @@ repos:
       - id: detect-private-key
       - id: check-added-large-files
         args: [ '--maxkb=1024' ]
+      - id: check-shebang-scripts-are-executable
+      - id: check-executables-have-shebangs
 
 # sets up .pre-commit-ci.yaml to ensure pre-commit dependencies stay up to date
 ci:
