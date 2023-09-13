@@ -1,0 +1,23 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [ 'main', 'dev' ]
+    types:
+      - opened
+      - synchronize
+  push:
+    branches: [ 'main', 'dev' ]
+  workflow_dispatch:
+    if: github.actor != 'dependabot[bot]'
+
+permissions:
+  contents: read
+
+jobs:
+  linting:
+    uses: azataiot/reusable-actions/.github/workflows/reusable-python.yaml@dev
+    with:
+      run-pre-commit: true
+      run-py-test: true
+      run-pypi-publish: false
