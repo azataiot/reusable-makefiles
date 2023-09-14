@@ -63,13 +63,14 @@ remove-target:
 			PHONY_TARGETS=$$(awk '/.PHONY:/ {for (i=2; i<=NF; i++) print $$i}' ~/.Makefiles/$$TARGET_PATH/Makefile 2>/dev/null | tr '\n' ' '); \
 			sed -i.bak "/.PHONY: $$PHONY_TARGETS/d" Makefile; \
 			sed -i.bak '/include ~\/.Makefiles\/'$$TARGET_PATH'\/Makefile/d' Makefile; \
-			echo "Removed $$TARGET_PATH Makefile reference from the current project."; \
+			echo "Removed $$TARGET_PATH Makefile reference and its .PHONY targets from the current project."; \
 		else \
 			echo "Error: $$TARGET_PATH Makefile not found in the index."; \
 		fi; \
 	else \
 		echo "$$TARGET_PATH Makefile is not included in the current project."; \
 	fi
+
 
 
 
@@ -93,5 +94,3 @@ remove-target-file:
 	@:
 include ~/.Makefiles/pre-commit/Makefile
 .PHONY: pre-commit
-include ~/.Makefiles/git/Makefile
-.PHONY: push prdev pr branch branch-obsolete
