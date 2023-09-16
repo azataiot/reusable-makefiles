@@ -24,7 +24,7 @@ help:
 update-targets:
 	@mkdir -p ~/.Makefiles
 	@echo "Fetching directory structure from the repository..."
-	@curl -s "https://api.github.com/repos/azataiot/reusable-makefiles/git/trees/main?recursive=1" | \
+	@curl -s "https://api.github.com/repos/azataiot/reusable-makefiles/git/trees/dev?recursive=1" | \
 	awk -F'"' '/"path":/ && /Makefile/ {print $$4}' > temp_index.txt
 	@mv temp_index.txt $(INDEX_FILE)
 	@echo "Updated the Makefile index."
@@ -38,7 +38,7 @@ add-target:
 	TARGET_PATH=$(filter-out $@,$(MAKECMDGOALS)); \
 	if grep -q "$$TARGET_PATH/Makefile" $(INDEX_FILE); then \
 		mkdir -p ~/.Makefiles/$$TARGET_PATH; \
-		wget -q --no-check-certificate -O ~/.Makefiles/$$TARGET_PATH/Makefile https://github.com/azataiot/reusable-makefiles/raw/main/$$TARGET_PATH/Makefile; \
+		wget -q --no-check-certificate -O ~/.Makefiles/$$TARGET_PATH/Makefile https://github.com/azataiot/reusable-makefiles/raw/dev/$$TARGET_PATH/Makefile; \
 		if ! grep -q "include ~/.Makefiles/$$TARGET_PATH/Makefile" Makefile; then \
 			echo "include ~/.Makefiles/$$TARGET_PATH/Makefile" >> Makefile; \
 			PHONY_TARGETS=$$(awk '/.PHONY:/ {for (i=2; i<=NF; i++) print $$i}' ~/.Makefiles/$$TARGET_PATH/Makefile | tr '\n' ' '); \
