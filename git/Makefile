@@ -61,7 +61,7 @@ branch:
 	@bash -c ' \
 	echo "Choose a branch type:"; \
 	PS3="Select an option: "; \
-	options=("main" "dev" "feature" "release" "hotfix" "temp" "quit"); \
+	options=("main" "dev" "feature" "release" "hotfix" "temp" "checkout" "quit"); \
 	select opt in "$${options[@]}"; do \
 		case $$opt in \
 			main) \
@@ -89,18 +89,36 @@ branch:
 				break; \
 				;; \
 			release) \
-				read -p "Enter the release version: " version; \
-				git checkout -b release/$$version; \
+				if ! make version; then \
+					read -p "Enter the release version: " version; \
+					git checkout -b release/$$version; \
+				fi; \
 				break; \
 				;; \
 			hotfix) \
-				read -p "Enter the hotfix version: " version; \
-				git checkout -b hotfix/$$version; \
+				if ! make version; then \
+					read -p "Enter the hotfix version: " version; \
+					git checkout -b hotfix/$$version; \
+				fi; \
 				break; \
 				;; \
 			temp) \
 				random_string=$$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13); \
 				git checkout -b temp/$$random_string; \
+				break; \
+				;; \
+			checkout) \
+				echo "Fetching all branches..."; \
+				git fetch; \
+				echo "Available branches:"; \
+				git branch -a; \
+				read -p "Select a branch to checkout: " branch_choice; \
+				git checkout $$branch_choice; \
+				read -p "Do you want to run git pull? [Y/n]: " pull_choice; \
+				[ -z "$$pull_choice" ] && pull_choice="Y"; \
+				if [ $$pull_choice = "Y" ] || [ $$pull_choice = "y" ]; then \
+					git pull; \
+				fi; \
 				break; \
 				;; \
 			quit) \
@@ -113,7 +131,6 @@ branch:
 		esac; \
 	done; \
 	'
-
 
 
 ## Make the current branch obsolete and remove it from remote and local repositories
