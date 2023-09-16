@@ -1,0 +1,27 @@
+name: Generate index.txt
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  generate-index:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Generate index.txt
+      run: |
+        find . -name "Makefile" | grep -v "^./Makefile$" > index.txt
+
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add index.txt
+        git commit -m "Automatically update index.txt" || echo "No changes to commit"
+        git push
