@@ -1,5 +1,5 @@
 # reusable-makefiles
-[![Code Quality](https://github.com/azataiot/reusable-makefiles/actions/workflows/linting.yaml/badge.svg)](https://github.com/azataiot/reusable-makefiles/actions/workflows/linting.yaml)
+[![Code Quality](https://github.com/azataiot/reusable-makefiles/actions/workflows/code-quality.yaml/badge.svg)](https://github.com/azataiot/reusable-makefiles/actions/workflows/code-quality.yaml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![latest release](https://img.shields.io/github/v/release/azataiot/reusable-makefiles)](https://github.com/azataiot/reusable-makefiles/releases)
 

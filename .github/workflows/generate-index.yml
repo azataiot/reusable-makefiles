@@ -1,0 +1,51 @@
+name: Generate index.txt
+
+on:
+  workflow_run:
+    workflows: ["Code Quality"]  # Name of the other workflow
+    types:
+      - completed
+
+jobs:
+  generate-index:
+    # Check if the previous workflow was successful and it was on the dev branch
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'dev'
+    permissions:
+      contents: write
+      checks: read
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Generate index.txt
+      run: |
+        find . -name "Makefile" | grep -v "^./Makefile$" > index.txt
+
+    - name: Commit changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add index.txt
+        git commit -m "Automatically update index.txt" || echo "No changes to commit"
+
+    - name: Wait for pre-commit status check
+      id: wait-for-status
+      uses: octokit/request-action@v2.x
+      with:
+        route: GET /repos/{owner}/{repo}/commits/{commit_sha}/check-runs
+        owner: azataiot
+        repo: reusable-makefiles
+        commit_sha: ${{ github.sha }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Check pre-commit result and push if successful
+      run: |
+        status=$(jq '.check_runs[] | select(.name == "pre-commit") | .conclusion' <<< "${{ steps.wait-for-status.outputs.data }}")
+        if [[ "$status" == "success" ]]; then
+          git push
+        else
+          echo "pre-commit check failed. Not pushing."
+        fi
