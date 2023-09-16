@@ -12,6 +12,7 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'dev'
     permissions:
       contents: write
+      pull-requests: write
       checks: read
     runs-on: ubuntu-latest
 
@@ -23,10 +24,22 @@ jobs:
       run: |
         find . -name "Makefile" | grep -v "^./Makefile$" > index.txt
 
-    - name: Commit changes
+    - name: Create Pull Request using gh CLI
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
+
+        # Create a new branch for the changes
+        git checkout -b update-index-txt-$(date +'%Y%m%d%H%M%S')
+
+        # Commit the changes
         git add index.txt
         git commit -m "Automatically update index.txt" || echo "No changes to commit"
-        git push
+
+        # Push the new branch
+        git push origin update-index-txt-$(date +'%Y%m%d%H%M%S')
+
+        # Use gh CLI to create the PR
+        gh pr create --base dev --head update-index-txt-$(date +'%Y%m%d%H%M%S') --title "Automatically update index.txt" --body "This PR updates the index.txt file." --repo ${{ github.repository }}
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
