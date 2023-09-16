@@ -22,12 +22,10 @@ help:
 
 ## Update the index of available Makefiles
 update-targets:
-	@mkdir -p ~/.Makefiles
 	@echo "Fetching directory structure from the repository..."
-	@curl -s "https://api.github.com/repos/azataiot/reusable-makefiles/git/trees/dev?recursive=1" | \
-	awk -F'"' '/"path":/ && /Makefile/ {print $$4}' > temp_index.txt
-	@mv temp_index.txt $(INDEX_FILE)
+	@curl -s "https://raw.githubusercontent.com/azataiot/reusable-makefiles/dev/index.txt" > $(INDEX_FILE)
 	@echo "Updated the Makefile index."
+
 
 ## Add a reusable Makefile from the repository
 add-target:
