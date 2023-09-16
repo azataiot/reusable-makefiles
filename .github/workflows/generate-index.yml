@@ -3,11 +3,12 @@ name: Generate index.txt
 on:
   push:
     branches:
-      - main
       - dev
 
 jobs:
   generate-index:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
 
     steps:
